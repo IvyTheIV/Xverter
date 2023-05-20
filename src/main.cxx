@@ -1,3 +1,20 @@
+//  Si5351 controller firmware.
+//  Copyright (C) 2023 IvyTheIV
+//
+//  This file is part of Xverter.
+//  Xverter is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  Xverter is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #define SSD1306_NO_SPLASH
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
@@ -330,7 +347,7 @@ void setup() {
 
     display.setFont(&Picopixel);
     display.setCursor(0, 63);
-    display.print(F("IvyTheIV/Xverter"));
+    display.print(F("github.com/IvyTheIV/Xverter"));
 
     display.setCursor(112, 63);
     display.print(F("v.1.6"));      // board version
