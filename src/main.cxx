@@ -268,12 +268,12 @@ void main_menu_loop() {
             display.drawFastHLine(0, 11, 127, 1);
             display.drawFastHLine(53, 33, 37, 1);
             display.drawFastHLine(53, 45, 37, 1);
-            display.drawBitmap(0, 24, logo_small, 32, 32, 1);
+            display.drawBitmap(6, 18, logo_small, 32, 32, 1);
 
             display_number(48, 36, selected_shift_value);
 
 #ifdef DEBUG
-            display.setCursor(0, 54);
+            display.setCursor(3, 54);
             display.print(200000L - selected_shift_value);
 #endif
 
@@ -329,7 +329,6 @@ void setup() {
     display.setTextColor(1);
 
     display.setFont(&Picopixel);
-    display.drawRect(0, 58, 127, 6, 0);
     display.setCursor(0, 63);
     display.print(F("IvyTheIV/Xverter"));
 
