@@ -15,7 +15,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#define SSD1306_NO_SPLASH
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include "Picopixel.h"
@@ -42,7 +41,7 @@ Si5351 si5351;
 bool encoder_btn_state = HIGH;
 bool encoder_btn_state_prev = HIGH;
 
-const size_t MAX_SAVED_VALUES = 8;
+const size_t MAX_SAVED_VALUES = 12;
 
 volatile int32_t correction_val;
 volatile int32_t shift_values[MAX_SAVED_VALUES];
@@ -125,7 +124,7 @@ void calibration_loop() {
 
     bool exit = false;
     bool edit = false; // will turn true on the first iteration
-    si5351.set_freq(15000000000UL, SI5351_CLK0);
+    si5351.set_freq(15000000000UL, SI5351_CLK1);
 
     while(!exit) {
         noInterrupts();
@@ -213,7 +212,11 @@ ISR(PCINT2_vect) {
         menu_function(-1);
 }
 
-int32_t default_values[MAX_SAVED_VALUES] = {33600, 41000, 42500, 53600, 73100, 43000, 48000, 54000};
+int32_t default_values[MAX_SAVED_VALUES] = {
+    33600, 41000, 42500, 53600, 
+    73100, 33600, 33600, 33600,
+    33600, 33600, 33600, 33600,
+};
 
 enum MainMenuModes {
     Scroll,
@@ -233,7 +236,7 @@ void main_menu_loop() {
 
     Menu menu_copy;
     MainMenuModes mode = Scroll;
-    si5351.set_freq(calc_frequency(selected_shift_value), SI5351_CLK0);
+    si5351.set_freq(calc_frequency(selected_shift_value), SI5351_CLK1);
 
     for(;;) {
         noInterrupts();
@@ -299,7 +302,7 @@ void main_menu_loop() {
 
             switch (mode) {
                 case Scroll:
-                    si5351.set_freq(calc_frequency(selected_shift_value), SI5351_CLK0);
+                    si5351.set_freq(calc_frequency(selected_shift_value), SI5351_CLK1);
 
                     display.setFont(&Picopixel);
                     display_number(50, 36 - 16, shift_values[(selected + MAX_SAVED_VALUES - 2) % MAX_SAVED_VALUES]);
@@ -307,6 +310,15 @@ void main_menu_loop() {
                     display_number(54, 40 + 12, shift_values[(selected + MAX_SAVED_VALUES + 1) % MAX_SAVED_VALUES]);
                     display_number(50, 40 + 20, shift_values[(selected + MAX_SAVED_VALUES + 2) % MAX_SAVED_VALUES]);
                     display.setFont(nullptr);
+                    display.setTextSize(2);
+                    // display.setCursor(112, 50);
+                    if (selected + 1 > 9)
+                        display.setCursor(100, 50);
+                    else
+                        display.setCursor(112, 50);
+                    // display.setCursor(107, 43);
+                    display.print(selected + 1);
+                    display.setTextSize(1);
                     break;
                 case EditScroll:
                     display.drawFastHLine((menu_copy.cursor_index + 8) * 6, 44, 6, 1);
@@ -333,11 +345,12 @@ void main_menu_loop() {
 }
 
 void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
     pinMode(ENC_BUTTON, INPUT_PULLUP);
 
     if (!display.begin(SCREEN_ADDRESS, false)) {
         digitalWrite(LED_BUILTIN, HIGH);
-        while(true);
+        for(;;);
     }
 
     display.clearDisplay();
@@ -378,18 +391,19 @@ void setup() {
         for(;;);
     }
 
-    si5351.set_freq(calc_frequency(shift_values[selected]), SI5351_CLK0);
-    si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
+    si5351.set_freq(calc_frequency(shift_values[selected]), SI5351_CLK1);
 
     si5351.set_ms_source(SI5351_CLK1, SI5351_PLLB);
-    si5351.set_freq_manual(20000000000ULL, 80000000000ULL, SI5351_CLK1);
+    si5351.set_freq_manual(20000000000ULL, 80000000000ULL, SI5351_CLK0);
+
+    si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
     si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_8MA);
 
     si5351.output_enable(SI5351_CLK0, 1);
     si5351.output_enable(SI5351_CLK1, 1);
     si5351.output_enable(SI5351_CLK2, 0);
 
-    delay(5000);
+    delay(3000);
     
     encoder.begin();
 
