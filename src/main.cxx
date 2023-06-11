@@ -15,8 +15,15 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// Uncomment to use SSD1306-based screens, otherwise SH1106 is assumed.
+// #define SSD1306
+
 #include <Adafruit_GFX.h>
+#ifdef SSD1306
+#include <Adafruit_SSD1306.h>
+#else
 #include <Adafruit_SH110X.h>
+#endif
 #include "Picopixel.h"
 #include <Rotary.h>
 #include <si5351.h>
@@ -34,7 +41,12 @@
 #define CORRECTION_MAX 99999L
 #define DEBUG
 
+#ifdef SSD1306
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+#else
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+#endif
+
 Rotary encoder = Rotary(INPUT_A, INPUT_B);
 Si5351 si5351;
 
@@ -227,7 +239,7 @@ enum MainMenuModes {
 void main_menu_loop() {
     noInterrupts();
     menu.step_multiplier = 1000;
-    menu.cursor_index = 1;
+    menu.cursor_index = 2;
     menu.update = true;
 
     menu_function = &enc_main_menu_scroll;
@@ -240,7 +252,7 @@ void main_menu_loop() {
 
     for(;;) {
         noInterrupts();
-        menu_copy.step_multiplier = menu_copy.step_multiplier;
+        menu_copy.step_multiplier = menu.step_multiplier;
         menu_copy.cursor_index = menu.cursor_index;
         menu_copy.update = menu.update;
         menu.update = false;
@@ -256,7 +268,8 @@ void main_menu_loop() {
                 case Scroll:
                     mode = EditSelect;
                     noInterrupts();
-                    menu_copy.cursor_index = menu.cursor_index = 1;
+                    menu.cursor_index = menu_copy.cursor_index = 2;
+                    menu.step_multiplier = menu_copy.step_multiplier = 1000;
                     menu_function = &enc_main_menu_edit_select;
                     interrupts();
                     break;
@@ -348,7 +361,11 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(ENC_BUTTON, INPUT_PULLUP);
 
+#ifdef SSD1306
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+#else
     if (!display.begin(SCREEN_ADDRESS, false)) {
+#endif
         digitalWrite(LED_BUILTIN, HIGH);
         for(;;);
     }
