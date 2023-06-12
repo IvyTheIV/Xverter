@@ -16,7 +16,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Uncomment to use SSD1306-based screens, otherwise SH1106 is assumed.
-// #define SSD1306
+#define SSD1306
 
 #include <Adafruit_GFX.h>
 #ifdef SSD1306
@@ -353,7 +353,8 @@ void main_menu_loop() {
 
         delay(50);
         encoder_btn_state_prev = encoder_btn_state;
-        display.display();
+        if (menu_copy.update)
+            display.display();
     }
 }
 
