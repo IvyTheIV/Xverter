@@ -210,7 +210,8 @@ void calibration_loop() {
 
         delay(50);
         encoder_btn_state_prev = encoder_btn_state;
-        display.display();
+        if (menu_copy.update)
+            display.display();
     }
 }
 
