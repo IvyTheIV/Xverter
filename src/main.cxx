@@ -16,7 +16,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Uncomment to use SSD1306-based screens, otherwise SH1106 is assumed.
-#define SSD1306
+// #define SSD1306
 
 #include <Adafruit_GFX.h>
 #ifdef SSD1306
@@ -53,12 +53,30 @@ Si5351 si5351;
 bool encoder_btn_state = HIGH;
 bool encoder_btn_state_prev = HIGH;
 
-const size_t MAX_SAVED_VALUES = 12;
+const size_t MAX_SAVED_VALUES = 11; // only 11. 
+                                    // Otherwise arduino starts to misbehave.
 
 volatile int32_t correction_val;
 volatile int32_t shift_values[MAX_SAVED_VALUES];
 size_t selected = 0;
 char display_value[8];
+
+uint32_t prev_millis = 0;
+uint32_t current_millis;
+const uint32_t SCREEN_OFF_INTERVAL = 60000;
+
+void reset_screen_off_timer() {
+    prev_millis = current_millis;
+}
+
+bool screen_turn_off_on_interval() {
+    if (current_millis - prev_millis >= SCREEN_OFF_INTERVAL) {
+        display.clearDisplay();
+        display.display();
+        return false;
+    }
+    return true;
+}
 
 volatile struct Menu {
     uint8_t cursor_index;
@@ -130,17 +148,19 @@ void calibration_loop() {
 
     menu_function = &enc_calibration;
 
-    Menu menu_copy;
     int32_t correction_val_copy = (int32_t)correction_val;
     interrupts();
 
+    Menu menu_copy;
+
     bool exit = false;
     bool edit = false; // will turn true on the first iteration
+    bool screen_is_on = true;
     si5351.set_freq(15000000000UL, SI5351_CLK1);
 
     while(!exit) {
         noInterrupts();
-        menu_copy.step_multiplier = menu_copy.step_multiplier;
+        menu_copy.step_multiplier = menu.step_multiplier;
         menu_copy.cursor_index = menu.cursor_index;
         menu_copy.update = menu.update;
         menu.update = false;
@@ -149,6 +169,11 @@ void calibration_loop() {
                 correction_val, -CORRECTION_MAX, CORRECTION_MAX);
         correction_val_copy = correction_val;
         interrupts();
+
+        current_millis = millis();
+        if (screen_is_on) {
+            screen_is_on = screen_turn_off_on_interval();
+        }
 
         encoder_btn_state = digitalRead(ENC_BUTTON);
         if (encoder_btn_state != encoder_btn_state_prev && encoder_btn_state == LOW) {
@@ -172,8 +197,9 @@ void calibration_loop() {
             }
         }
 
-
         if (menu_copy.update) {
+            reset_screen_off_timer();
+            screen_is_on = true;
 
             si5351.set_correction(correction_val_copy * 100, SI5351_PLL_INPUT_XO);
 
@@ -228,7 +254,7 @@ ISR(PCINT2_vect) {
 int32_t default_values[MAX_SAVED_VALUES] = {
     33600, 41000, 42500, 53600, 
     73100, 33600, 33600, 33600,
-    33600, 33600, 33600, 33600,
+    33600, 33600, 33600, /* 33600, */
 };
 
 enum MainMenuModes {
@@ -249,6 +275,7 @@ void main_menu_loop() {
 
     Menu menu_copy;
     MainMenuModes mode = Scroll;
+    bool screen_is_on = true;
     si5351.set_freq(calc_frequency(selected_shift_value), SI5351_CLK1);
 
     for(;;) {
@@ -257,9 +284,15 @@ void main_menu_loop() {
         menu_copy.cursor_index = menu.cursor_index;
         menu_copy.update = menu.update;
         menu.update = false;
+
         shift_values[selected] = constrain(shift_values[selected], 20000, 80000);
         selected_shift_value = shift_values[selected];
         interrupts();
+
+        current_millis = millis();
+        if (screen_is_on) {
+            screen_is_on = screen_turn_off_on_interval();
+        }
 
         encoder_btn_state = digitalRead(ENC_BUTTON);
         if (encoder_btn_state != encoder_btn_state_prev && encoder_btn_state == LOW) {
@@ -296,6 +329,9 @@ void main_menu_loop() {
         }
 
         if (menu_copy.update) {
+            reset_screen_off_timer();
+            screen_is_on = true;
+
             display.clearDisplay();
             display.setCursor(6, 0);
             display.print(F("+ FREQUENCY SHIFT"));
