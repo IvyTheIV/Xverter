@@ -102,7 +102,7 @@ void display_number(int x, int y, int32_t num) {
 }
 
 uint64_t calc_frequency(int32_t shift) {
-    return (200000ULL - shift) * 100000ULL;
+    return (100000ULL + shift) * 100000ULL;
 }
 
 void enc_calibration(int dir) {
@@ -344,7 +344,7 @@ void main_menu_loop() {
 
 #ifdef DEBUG
             display.setCursor(3, 54);
-            display.print(200000L - selected_shift_value);
+            display.print(100000L + selected_shift_value);
 #endif
 
             if (menu_copy.cursor_index > 2)
@@ -449,7 +449,7 @@ void setup() {
     si5351.set_freq(calc_frequency(shift_values[selected]), SI5351_CLK1);
 
     si5351.set_ms_source(SI5351_CLK1, SI5351_PLLB);
-    si5351.set_freq_manual(20000000000ULL, 80000000000ULL, SI5351_CLK0);
+    si5351.set_freq_manual(10000000000ULL, 80000000000ULL, SI5351_CLK0);
 
     si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
     si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_8MA);
