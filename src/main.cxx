@@ -34,8 +34,8 @@
 #define SCREEN_HEIGHT 64
 #define SCREEN_ADDRESS 0x3C
 
-#define INPUT_A 2
-#define INPUT_B 3
+#define INPUT_A 3
+#define INPUT_B 2
 #define ENC_BUTTON 4
 
 #define CORRECTION_MAX 99999L
@@ -156,7 +156,7 @@ void calibration_loop() {
     bool exit = false;
     bool edit = false; // will turn true on the first iteration
     bool screen_is_on = true;
-    si5351.set_freq(15000000000UL, SI5351_CLK1);
+    si5351.set_freq(calc_frequency(53600), SI5351_CLK1);
 
     while(!exit) {
         noInterrupts();
@@ -208,9 +208,8 @@ void calibration_loop() {
             display.print(F("CALIBRATION"));
             display.drawFastHLine(0, 11, 127, 1);
             display.setCursor(1, 20);
-            display.print(F("REF:"));
-            display.setCursor(36, 20);
-            display.print(F("150.000 MHz"));
+            display.print(F("REF: "));
+            display.print(F("200.000 +53.6MHz"));
             display.setCursor(1, 40);
             display.print(F("CAL:"));
             display.setCursor(101, 53);
@@ -371,6 +370,7 @@ void main_menu_loop() {
                     display.setTextSize(1);
                     break;
                 case EditScroll:
+                    si5351.set_freq(calc_frequency(shift_values[selected]), SI5351_CLK1);
                     display.drawFastHLine((menu_copy.cursor_index + 8) * 6, 44, 6, 1);
                     display.setCursor(101, 53);
                     display.print(F("save"));
